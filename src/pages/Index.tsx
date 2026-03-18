@@ -153,10 +153,125 @@ const PLAYER_TABS = [
   { id: "perms", label: "Разрешения", icon: "Settings" },
 ];
 
-function PlayerProfile({ player, onClose }: { player: Player; onClose: () => void }) {
-  const [tab, setTab] = useState("overview");
+type ActionDialog = "mute" | "ban" | "check" | "kick" | null;
+
+function ActionConfirmDialog({
+  type,
+  player,
+  onClose,
+}: {
+  type: ActionDialog;
+  player: Player;
+  onClose: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const [duration, setDuration] = useState("60");
+
+  if (!type) return null;
+
+  const config = {
+    mute: { title: "Выдать мут", icon: "VolumeX", color: "text-yellow-400", btnColor: "bg-yellow-600 hover:bg-yellow-500", btnLabel: "Замутить", showDuration: true },
+    ban: { title: "Заблокировать", icon: "Ban", color: "text-red-400", btnColor: "bg-red-700 hover:bg-red-600", btnLabel: "Заблокировать", showDuration: true },
+    check: { title: "Начать проверку", icon: "ShieldCheck", color: "text-blue-400", btnColor: "bg-blue-700 hover:bg-blue-600", btnLabel: "Начать проверку", showDuration: false },
+    kick: { title: "Кикнуть", icon: "LogOut", color: "text-orange-400", btnColor: "bg-orange-700 hover:bg-orange-600", btnLabel: "Кикнуть", showDuration: false },
+  }[type];
+
+  const durations = [
+    { v: "30", l: "30 минут" },
+    { v: "60", l: "1 час" },
+    { v: "1440", l: "1 день" },
+    { v: "10080", l: "7 дней" },
+    { v: "43200", l: "30 дней" },
+    { v: "0", l: "Навсегда" },
+  ];
 
   return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/70" />
+      <div
+        className="relative z-10 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,18%)] rounded-xl shadow-2xl animate-fade-in w-96 p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className={`w-8 h-8 rounded-lg bg-[hsl(0,0%,16%)] flex items-center justify-center ${config.color}`}>
+            <Icon name={config.icon} size={16} />
+          </div>
+          <div>
+            <div className="text-sm font-semibold">{config.title}</div>
+            <div className="text-xs text-muted-foreground">Игрок: <span className="text-foreground font-medium">{player.name}</span></div>
+          </div>
+          <button onClick={onClose} className="ml-auto text-muted-foreground hover:text-foreground transition-colors">
+            <Icon name="X" size={14} />
+          </button>
+        </div>
+
+        {/* Duration (mute/ban only) */}
+        {config.showDuration && (
+          <div className="mb-4">
+            <div className="text-xs text-muted-foreground mb-2">Длительность</div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {durations.map((d) => (
+                <button
+                  key={d.v}
+                  onClick={() => setDuration(d.v)}
+                  className={`text-xs py-1.5 rounded-md transition-colors ${
+                    duration === d.v
+                      ? "bg-[hsl(0,0%,22%)] text-foreground font-medium"
+                      : "bg-[hsl(0,0%,15%)] text-muted-foreground hover:bg-[hsl(0,0%,18%)]"
+                  }`}
+                >
+                  {d.l}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reason */}
+        <div className="mb-5">
+          <div className="text-xs text-muted-foreground mb-2">Причина</div>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder={type === "check" ? "Подозрение в читерстве..." : type === "kick" ? "Причина кика..." : "Укажите причину..."}
+            className="w-full bg-[hsl(0,0%,15%)] border border-[hsl(0,0%,18%)] rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none focus:border-[hsl(0,0%,25%)] transition-colors"
+            rows={3}
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 text-sm text-muted-foreground bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] rounded-lg transition-colors"
+          >
+            Отмена
+          </button>
+          <button
+            onClick={onClose}
+            className={`flex-1 py-2 text-sm text-white font-medium rounded-lg transition-colors ${config.btnColor}`}
+          >
+            {config.btnLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlayerProfile({ player, onClose }: { player: Player; onClose: () => void }) {
+  const [tab, setTab] = useState("overview");
+  const [actionMenu, setActionMenu] = useState(false);
+  const [actionDialog, setActionDialog] = useState<ActionDialog>(null);
+
+  const openAction = (type: ActionDialog) => {
+    setActionMenu(false);
+    setActionDialog(type);
+  };
+
+  return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
@@ -179,12 +294,35 @@ function PlayerProfile({ player, onClose }: { player: Player; onClose: () => voi
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button className="flex-1 flex items-center justify-center gap-1.5 bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] transition-colors rounded-md py-1.5 text-xs text-muted-foreground">
+              <button className="flex-1 flex items-center justify-center bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] transition-colors rounded-md py-1.5 text-muted-foreground hover:text-foreground">
                 <Icon name="RefreshCw" size={12} />
               </button>
-              <button className="flex-1 flex items-center justify-center gap-1.5 bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] transition-colors rounded-md py-1.5 text-xs text-muted-foreground">
-                <Icon name="MoreHorizontal" size={12} />
-              </button>
+              {/* Actions dropdown */}
+              <div className="relative flex-1">
+                <button
+                  onClick={() => setActionMenu((v) => !v)}
+                  className="w-full flex items-center justify-center bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] transition-colors rounded-md py-1.5 text-muted-foreground hover:text-foreground"
+                >
+                  <Icon name="MoreHorizontal" size={12} />
+                </button>
+                {actionMenu && (
+                  <div className="absolute left-0 top-full mt-1 w-44 bg-[hsl(0,0%,14%)] border border-[hsl(0,0%,20%)] rounded-lg shadow-xl z-20 py-1 animate-fade-in">
+                    <button onClick={() => openAction("check")} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-blue-400 hover:bg-[hsl(0,0%,18%)] transition-colors text-left">
+                      <Icon name="ShieldCheck" size={13} />Начать проверку
+                    </button>
+                    <button onClick={() => openAction("mute")} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-yellow-400 hover:bg-[hsl(0,0%,18%)] transition-colors text-left">
+                      <Icon name="VolumeX" size={13} />Выдать мут
+                    </button>
+                    <button onClick={() => openAction("kick")} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-orange-400 hover:bg-[hsl(0,0%,18%)] transition-colors text-left">
+                      <Icon name="LogOut" size={13} />Кикнуть
+                    </button>
+                    <div className="border-t border-[hsl(0,0%,18%)] my-1" />
+                    <button onClick={() => openAction("ban")} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-red-400 hover:bg-[hsl(0,0%,18%)] transition-colors text-left">
+                      <Icon name="Ban" size={13} />Заблокировать
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           {/* Tabs nav */}
@@ -346,6 +484,15 @@ function PlayerProfile({ player, onClose }: { player: Player; onClose: () => voi
         </button>
       </div>
     </div>
+
+    {actionDialog && (
+      <ActionConfirmDialog
+        type={actionDialog}
+        player={player}
+        onClose={() => setActionDialog(null)}
+      />
+    )}
+    </>
   );
 }
 
