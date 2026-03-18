@@ -135,9 +135,225 @@ function SearchBar() {
   );
 }
 
+// ---- Player Profile Modal ----
+
+type Player = typeof MOCK_PLAYERS[0];
+
+const PLAYER_TABS = [
+  { id: "overview", label: "Обзор", icon: "LayoutDashboard" },
+  { id: "team", label: "Команда", icon: "Users" },
+  { id: "reports", label: "Репорты", icon: "Flag" },
+  { id: "stats", label: "Статистика", icon: "BarChart2" },
+  { id: "activity", label: "Лог активности", icon: "Activity" },
+  { id: "notifs", label: "Оповещения", icon: "Bell" },
+  { id: "drawings", label: "Рисунки", icon: "PenTool" },
+  { id: "checks", label: "Проверки", icon: "ShieldCheck", badge: 1 },
+  { id: "mutes", label: "Муты", icon: "VolumeX" },
+  { id: "bans2", label: "Блокировки", icon: "Ban" },
+  { id: "perms", label: "Разрешения", icon: "Settings" },
+];
+
+function PlayerProfile({ player, onClose }: { player: Player; onClose: () => void }) {
+  const [tab, setTab] = useState("overview");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className="relative z-10 flex bg-[hsl(0,0%,11%)] rounded-xl border border-[hsl(0,0%,16%)] shadow-2xl animate-fade-in overflow-hidden"
+        style={{ width: 660, maxHeight: "80vh" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Left panel */}
+        <div className="w-48 flex-shrink-0 bg-[hsl(0,0%,9%)] border-r border-[hsl(0,0%,14%)] flex flex-col">
+          {/* Player header */}
+          <div className="p-4 border-b border-[hsl(0,0%,14%)]">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="relative">
+                <AvatarBadge name={player.name} size="md" />
+                <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[hsl(0,0%,9%)] ${player.status === "online" ? "bg-emerald-400" : "bg-yellow-500"}`} />
+              </div>
+              <div>
+                <div className="text-sm font-semibold">{player.name}</div>
+                <div className="text-xs text-muted-foreground">{player.status === "online" ? "онлайн" : "нет на месте"}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="flex-1 flex items-center justify-center gap-1.5 bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] transition-colors rounded-md py-1.5 text-xs text-muted-foreground">
+                <Icon name="RefreshCw" size={12} />
+              </button>
+              <button className="flex-1 flex items-center justify-center gap-1.5 bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] transition-colors rounded-md py-1.5 text-xs text-muted-foreground">
+                <Icon name="MoreHorizontal" size={12} />
+              </button>
+            </div>
+          </div>
+          {/* Tabs nav */}
+          <nav className="flex-1 overflow-y-auto py-1 px-1">
+            {PLAYER_TABS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded text-xs transition-colors text-left mb-0.5 ${
+                  tab === t.id
+                    ? "bg-[hsl(0,0%,16%)] text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-[hsl(0,0%,13%)]"
+                }`}
+              >
+                <Icon name={t.icon} size={13} className={tab === t.id ? "text-[hsl(28,100%,55%)]" : ""} />
+                <span className="flex-1">{t.label}</span>
+                {t.badge && (
+                  <span className="bg-[hsl(28,100%,55%)] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0">
+                    {t.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Right content */}
+        <div className="flex-1 overflow-y-auto p-5">
+          {tab === "overview" && (
+            <div className="space-y-4 animate-fade-in">
+              {/* Tags row */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="flex items-center gap-1 text-xs bg-[hsl(0,0%,15%)] px-2.5 py-1 rounded-full text-yellow-400">
+                  👤 Сотрудник
+                </span>
+                <span className="flex items-center gap-1 text-xs bg-[hsl(0,0%,15%)] px-2.5 py-1 rounded-full text-yellow-400">
+                  🟡 Соло
+                </span>
+                <span className="flex items-center gap-1 text-xs bg-[hsl(0,0%,15%)] px-2.5 py-1 rounded-full text-foreground">
+                  🇷🇺 RU
+                </span>
+                <span className="flex items-center gap-1 text-xs bg-[hsl(0,0%,15%)] px-2.5 py-1 rounded-full text-red-400">
+                  ☠️ Пират
+                </span>
+                <span className="flex items-center gap-1 text-xs bg-[hsl(0,0%,15%)] px-2.5 py-1 rounded-full text-blue-400">
+                  🖥 37 ms
+                </span>
+              </div>
+
+              {/* Состояние */}
+              <div className="bg-[hsl(0,0%,13%)] rounded-lg p-4">
+                <div className="text-xs font-semibold text-foreground mb-3">Состояние</div>
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { label: "Двигался", value: "3 мин. назад" },
+                    { label: "Был дома", value: "Сейчас" },
+                    { label: "Квадрат", value: "F4" },
+                    { label: "На сервере", value: "38 минут" },
+                  ].map((s) => (
+                    <div key={s.label}>
+                      <div className="text-[11px] text-muted-foreground mb-0.5">{s.label}</div>
+                      <div className="text-sm font-medium">{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Статистика */}
+              <div className="bg-[hsl(0,0%,13%)] rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-xs font-semibold text-foreground">Статистика</div>
+                  <div className="text-xs text-muted-foreground">за 7 дней</div>
+                </div>
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { label: "K/D", value: "1.00" },
+                    { label: "Убийств", value: "0" },
+                    { label: "В голову", value: "0" },
+                    { label: "Смертей", value: "0" },
+                  ].map((s) => (
+                    <div key={s.label}>
+                      <div className="text-[11px] text-muted-foreground mb-0.5">{s.label}</div>
+                      <div className="text-sm font-medium">{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Об игроке */}
+              <div className="bg-[hsl(0,0%,13%)] rounded-lg p-4">
+                <div className="text-xs font-semibold text-foreground mb-3">Об игроке</div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                  <div>
+                    <div className="text-[11px] text-muted-foreground mb-0.5">Играет на</div>
+                    <div className="text-sm">{player.server}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-muted-foreground mb-0.5">SteamID</div>
+                    <div className="flex items-center gap-1.5 text-sm font-mono">
+                      76561198324308990
+                      <button className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Icon name="Copy" size={11} />
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-muted-foreground mb-0.5">Впервые замечен</div>
+                    <div className="text-sm">19.03.2026 в 00:21</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-muted-foreground mb-0.5">IP адрес</div>
+                    <div className="flex items-center gap-1.5 text-sm font-mono text-blue-400">
+                      {player.ip}
+                      <Icon name="ExternalLink" size={11} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-muted-foreground mb-0.5">Страна, город</div>
+                    <div className="text-sm">{player.country.split(" ").slice(0, 2).join(" ")}, {player.city}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-muted-foreground mb-0.5">Провайдер</div>
+                    <div className="text-sm">{player.isp}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Steam */}
+              <div className="bg-[hsl(0,0%,13%)] rounded-lg p-4">
+                <div className="text-xs font-semibold text-foreground mb-3">Информация из Steam</div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                  <div>
+                    <div className="text-[11px] text-muted-foreground mb-0.5">Приватность</div>
+                    <div className="text-sm">Открыт частично</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-muted-foreground mb-0.5">Аккаунт создан</div>
+                    <div className="text-sm">13.08.2016 в 08:09</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab !== "overview" && (
+            <div className="flex flex-col items-center justify-center h-48 text-muted-foreground animate-fade-in">
+              <Icon name="Construction" size={28} className="mb-2 opacity-40" />
+              <span className="text-sm">Раздел в разработке</span>
+            </div>
+          )}
+        </div>
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 p-1 rounded hover:bg-[hsl(0,0%,18%)] transition-colors text-muted-foreground hover:text-foreground z-10"
+        >
+          <Icon name="X" size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ---- Section components ----
 
 function PlayersSection() {
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+
   return (
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
@@ -155,7 +371,12 @@ function PlayersSection() {
                 <div className="flex items-center gap-2.5">
                   <div className="relative"><AvatarBadge name={p.name} /><span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[hsl(0,0%,9%)] ${p.status === "online" ? "bg-emerald-400" : "bg-[hsl(0,0%,28%)]"}`} /></div>
                   <div>
-                    <div className="text-sm font-medium">{p.name}</div>
+                    <button
+                      onClick={() => setSelectedPlayer(p)}
+                      className="text-sm font-medium hover:text-[hsl(28,100%,60%)] transition-colors cursor-pointer"
+                    >
+                      {p.name}
+                    </button>
                     <div className="text-xs text-muted-foreground">{p.status === "online" ? "онлайн" : "офлайн"}</div>
                   </div>
                 </div>
@@ -174,6 +395,10 @@ function PlayersSection() {
           ))}
         </tbody>
       </table>
+
+      {selectedPlayer && (
+        <PlayerProfile player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+      )}
     </div>
   );
 }
