@@ -19,6 +19,7 @@ const NAV_SECTIONS = [
       { id: "audit", label: "Журнал аудита", icon: "ClipboardList" },
       { id: "servers", label: "Серверы", icon: "Server" },
       { id: "staff", label: "Сотрудники", icon: "UserCog" },
+      { id: "settings", label: "Настройки", icon: "Settings" },
     ],
   },
 ];
@@ -170,10 +171,10 @@ function ActionConfirmDialog({
   if (!type) return null;
 
   const config = {
-    mute: { title: "Выдать мут", icon: "VolumeX", color: "text-yellow-400", btnColor: "bg-yellow-600 hover:bg-yellow-500", btnLabel: "Замутить", showDuration: true },
-    ban: { title: "Заблокировать", icon: "Ban", color: "text-red-400", btnColor: "bg-red-700 hover:bg-red-600", btnLabel: "Заблокировать", showDuration: true },
-    check: { title: "Начать проверку", icon: "ShieldCheck", color: "text-blue-400", btnColor: "bg-blue-700 hover:bg-blue-600", btnLabel: "Начать проверку", showDuration: false },
-    kick: { title: "Кикнуть", icon: "LogOut", color: "text-orange-400", btnColor: "bg-orange-700 hover:bg-orange-600", btnLabel: "Кикнуть", showDuration: false },
+    mute: { title: "Выдать мут", icon: "VolumeX", color: "text-yellow-400", btnColor: "bg-yellow-600 hover:bg-yellow-500", btnLabel: "Замутить", showDuration: true, showReason: true, isCheck: false },
+    ban:  { title: "Заблокировать", icon: "Ban", color: "text-red-400", btnColor: "bg-red-700 hover:bg-red-600", btnLabel: "Заблокировать", showDuration: true, showReason: true, isCheck: false },
+    check:{ title: "Вызвать на проверку?", icon: "ShieldCheck", color: "text-blue-400", btnColor: "bg-blue-700 hover:bg-blue-600", btnLabel: "Да", showDuration: false, showReason: false, isCheck: true },
+    kick: { title: "Кикнуть", icon: "LogOut", color: "text-orange-400", btnColor: "bg-orange-700 hover:bg-orange-600", btnLabel: "Кикнуть", showDuration: false, showReason: true, isCheck: false },
   }[type];
 
   const durations = [
@@ -189,7 +190,8 @@ function ActionConfirmDialog({
     <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70" />
       <div
-        className="relative z-10 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,18%)] rounded-xl shadow-2xl animate-fade-in w-96 p-5"
+        className="relative z-10 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,18%)] rounded-xl shadow-2xl animate-fade-in p-5"
+        style={{ width: config.isCheck ? 320 : 384 }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -228,17 +230,19 @@ function ActionConfirmDialog({
           </div>
         )}
 
-        {/* Reason */}
-        <div className="mb-5">
-          <div className="text-xs text-muted-foreground mb-2">Причина</div>
-          <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder={type === "check" ? "Подозрение в читерстве..." : type === "kick" ? "Причина кика..." : "Укажите причину..."}
-            className="w-full bg-[hsl(0,0%,15%)] border border-[hsl(0,0%,18%)] rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none focus:border-[hsl(0,0%,25%)] transition-colors"
-            rows={3}
-          />
-        </div>
+        {/* Reason (not for check) */}
+        {config.showReason && (
+          <div className="mb-5">
+            <div className="text-xs text-muted-foreground mb-2">Причина</div>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder={type === "kick" ? "Причина кика..." : "Укажите причину..."}
+              className="w-full bg-[hsl(0,0%,15%)] border border-[hsl(0,0%,18%)] rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none focus:border-[hsl(0,0%,25%)] transition-colors"
+              rows={3}
+            />
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-2">
@@ -246,7 +250,7 @@ function ActionConfirmDialog({
             onClick={onClose}
             className="flex-1 py-2 text-sm text-muted-foreground bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] rounded-lg transition-colors"
           >
-            Отмена
+            {config.isCheck ? "Нет" : "Отмена"}
           </button>
           <button
             onClick={onClose}
@@ -991,6 +995,116 @@ function StaffSection() {
   );
 }
 
+function SettingsSection() {
+  const [muteReasons, setMuteReasons] = useState([
+    "Оскорбления в чате",
+    "Спам",
+    "Реклама сторонних ресурсов",
+    "Флуд",
+  ]);
+  const [banReasons, setBanReasons] = useState([
+    "Читы (аимбот)",
+    "Читы (wallhack)",
+    "Читы (speedhack)",
+    "Мультиаккаунт",
+    "Токсичное поведение",
+    "Обход бана",
+  ]);
+  const [newMute, setNewMute] = useState("");
+  const [newBan, setNewBan] = useState("");
+
+  const addReason = (list: string[], setList: (v: string[]) => void, val: string, setVal: (v: string) => void) => {
+    if (!val.trim()) return;
+    setList([...list, val.trim()]);
+    setVal("");
+  };
+
+  const removeReason = (list: string[], setList: (v: string[]) => void, idx: number) => {
+    setList(list.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="animate-fade-in max-w-xl">
+      <div className="mb-6">
+        <h1 className="text-base font-semibold tracking-tight">Настройки</h1>
+        <p className="text-xs text-muted-foreground mt-1">Управление причинами наказаний</p>
+      </div>
+
+      {/* Mute reasons */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <Icon name="VolumeX" size={14} className="text-yellow-400" />
+          <span className="text-sm font-medium">Причины мута</span>
+        </div>
+        <div className="space-y-1.5 mb-3">
+          {muteReasons.map((r, i) => (
+            <div key={i} className="flex items-center gap-2 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,15%)] rounded-lg px-3 py-2 group">
+              <span className="text-sm flex-1">{r}</span>
+              <button
+                onClick={() => removeReason(muteReasons, setMuteReasons, i)}
+                className="text-muted-foreground hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+              >
+                <Icon name="X" size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={newMute}
+            onChange={(e) => setNewMute(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addReason(muteReasons, setMuteReasons, newMute, setNewMute)}
+            placeholder="Новая причина..."
+            className="flex-1 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,15%)] rounded-lg px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-[hsl(0,0%,22%)] transition-colors"
+          />
+          <button
+            onClick={() => addReason(muteReasons, setMuteReasons, newMute, setNewMute)}
+            className="px-3 py-2 bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Icon name="Plus" size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* Ban reasons */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Icon name="Ban" size={14} className="text-red-400" />
+          <span className="text-sm font-medium">Причины бана</span>
+        </div>
+        <div className="space-y-1.5 mb-3">
+          {banReasons.map((r, i) => (
+            <div key={i} className="flex items-center gap-2 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,15%)] rounded-lg px-3 py-2 group">
+              <span className="text-sm flex-1">{r}</span>
+              <button
+                onClick={() => removeReason(banReasons, setBanReasons, i)}
+                className="text-muted-foreground hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+              >
+                <Icon name="X" size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={newBan}
+            onChange={(e) => setNewBan(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addReason(banReasons, setBanReasons, newBan, setNewBan)}
+            placeholder="Новая причина..."
+            className="flex-1 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,15%)] rounded-lg px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-[hsl(0,0%,22%)] transition-colors"
+          />
+          <button
+            onClick={() => addReason(banReasons, setBanReasons, newBan, setNewBan)}
+            className="px-3 py-2 bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Icon name="Plus" size={14} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---- Main layout ----
 
 const SECTIONS: Record<string, React.ComponentType> = {
@@ -1003,6 +1117,7 @@ const SECTIONS: Record<string, React.ComponentType> = {
   audit: AuditSection,
   servers: ServersSection,
   staff: StaffSection,
+  settings: SettingsSection,
 };
 
 export default function Index() {
