@@ -167,97 +167,150 @@ function ActionConfirmDialog({
 }) {
   const [reason, setReason] = useState("");
   const [duration, setDuration] = useState("60");
+  const [step, setStep] = useState(1);
+  const [banForever, setBanForever] = useState(true);
+  const [banIp, setBanIp] = useState(false);
+  const [deleteBuilds, setDeleteBuilds] = useState(false);
+  const [banTeam, setBanTeam] = useState(false);
+  const [selectedServer, setSelectedServer] = useState("На всех");
 
   if (!type) return null;
 
-  const config = {
-    mute: { title: "Выдать мут", icon: "VolumeX", color: "text-yellow-400", btnColor: "bg-yellow-600 hover:bg-yellow-500", btnLabel: "Замутить", showDuration: true, showReason: true, isCheck: false },
-    ban:  { title: "Заблокировать", icon: "Ban", color: "text-red-400", btnColor: "bg-red-700 hover:bg-red-600", btnLabel: "Заблокировать", showDuration: true, showReason: true, isCheck: false },
-    check:{ title: "Вызвать на проверку?", icon: "ShieldCheck", color: "text-blue-400", btnColor: "bg-blue-700 hover:bg-blue-600", btnLabel: "Да", showDuration: false, showReason: false, isCheck: true },
-    kick: { title: "Кикнуть", icon: "LogOut", color: "text-orange-400", btnColor: "bg-orange-700 hover:bg-orange-600", btnLabel: "Кикнуть", showDuration: false, showReason: true, isCheck: false },
-  }[type];
+  if (type === "check") {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={onClose}>
+        <div className="absolute inset-0 bg-black/70" />
+        <div className="relative z-10 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,18%)] rounded-xl shadow-2xl animate-fade-in p-5 w-72" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-8 h-8 rounded-lg bg-[hsl(0,0%,16%)] flex items-center justify-center text-blue-400"><Icon name="ShieldCheck" size={16} /></div>
+            <div><div className="text-sm font-semibold">Вызвать на проверку?</div><div className="text-xs text-muted-foreground">Игрок: <span className="text-foreground font-medium">{player.name}</span></div></div>
+            <button onClick={onClose} className="ml-auto text-muted-foreground hover:text-foreground"><Icon name="X" size={14} /></button>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="flex-1 py-2 text-sm text-muted-foreground bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] rounded-lg transition-colors">Нет</button>
+            <button onClick={onClose} className="flex-1 py-2 text-sm text-white font-medium bg-blue-700 hover:bg-blue-600 rounded-lg transition-colors">Да</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const durations = [
-    { v: "30", l: "30 минут" },
-    { v: "60", l: "1 час" },
-    { v: "1440", l: "1 день" },
-    { v: "10080", l: "7 дней" },
-    { v: "43200", l: "30 дней" },
-    { v: "0", l: "Навсегда" },
-  ];
+  if (type === "kick") {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={onClose}>
+        <div className="absolute inset-0 bg-black/70" />
+        <div className="relative z-10 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,18%)] rounded-xl shadow-2xl animate-fade-in p-5 w-80" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-[hsl(0,0%,16%)] flex items-center justify-center text-orange-400"><Icon name="LogOut" size={16} /></div>
+            <div><div className="text-sm font-semibold">Кикнуть</div><div className="text-xs text-muted-foreground">Игрок: <span className="text-foreground font-medium">{player.name}</span></div></div>
+            <button onClick={onClose} className="ml-auto text-muted-foreground hover:text-foreground"><Icon name="X" size={14} /></button>
+          </div>
+          <div className="mb-4">
+            <div className="text-xs text-muted-foreground mb-1.5">Причина</div>
+            <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Причина кика..." className="w-full bg-[hsl(0,0%,15%)] border border-[hsl(0,0%,18%)] rounded-lg px-3 py-2 text-sm placeholder:text-muted-foreground outline-none resize-none" rows={2} />
+          </div>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="flex-1 py-2 text-sm text-muted-foreground bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] rounded-lg transition-colors">Отмена</button>
+            <button onClick={onClose} className="flex-1 py-2 text-sm text-white font-medium bg-orange-700 hover:bg-orange-600 rounded-lg transition-colors">Кикнуть</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isBan = type === "ban";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70" />
       <div
-        className="relative z-10 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,18%)] rounded-xl shadow-2xl animate-fade-in p-5"
-        style={{ width: config.isCheck ? 320 : 384 }}
+        className="relative z-10 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,18%)] rounded-xl shadow-2xl animate-fade-in w-80"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className={`w-8 h-8 rounded-lg bg-[hsl(0,0%,16%)] flex items-center justify-center ${config.color}`}>
-            <Icon name={config.icon} size={16} />
-          </div>
+        <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[hsl(0,0%,16%)]">
           <div>
-            <div className="text-sm font-semibold">{config.title}</div>
-            <div className="text-xs text-muted-foreground">Игрок: <span className="text-foreground font-medium">{player.name}</span></div>
+            <div className="text-sm font-semibold">{isBan ? "Настройки бана" : "Настройки мута"}</div>
+            <div className="text-xs text-muted-foreground">основные параметры</div>
           </div>
-          <button onClick={onClose} className="ml-auto text-muted-foreground hover:text-foreground transition-colors">
-            <Icon name="X" size={14} />
-          </button>
+          <div className="flex items-center gap-2">
+            <AvatarBadge name={player.name} size="sm" />
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><Icon name="X" size={13} /></button>
+          </div>
         </div>
 
-        {/* Duration (mute/ban only) */}
-        {config.showDuration && (
-          <div className="mb-4">
-            <div className="text-xs text-muted-foreground mb-2">Длительность</div>
-            <div className="grid grid-cols-3 gap-1.5">
-              {durations.map((d) => (
-                <button
-                  key={d.v}
-                  onClick={() => setDuration(d.v)}
-                  className={`text-xs py-1.5 rounded-md transition-colors ${
-                    duration === d.v
-                      ? "bg-[hsl(0,0%,22%)] text-foreground font-medium"
-                      : "bg-[hsl(0,0%,15%)] text-muted-foreground hover:bg-[hsl(0,0%,18%)]"
-                  }`}
-                >
-                  {d.l}
-                </button>
-              ))}
+        <div className="p-4 space-y-4">
+          {/* Причина */}
+          <div>
+            <div className="text-xs text-muted-foreground mb-1.5">Причина</div>
+            <div className="relative">
+              <input
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Введите или выберите причину"
+                className="w-full bg-[hsl(0,0%,15%)] border border-[hsl(0,0%,18%)] rounded-lg px-3 py-2 text-sm placeholder:text-muted-foreground outline-none pr-8"
+              />
+              <Icon name="ChevronsUpDown" size={13} className="absolute right-2.5 top-2.5 text-muted-foreground" />
             </div>
           </div>
-        )}
 
-        {/* Reason (not for check) */}
-        {config.showReason && (
-          <div className="mb-5">
-            <div className="text-xs text-muted-foreground mb-2">Причина</div>
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder={type === "kick" ? "Причина кика..." : "Укажите причину..."}
-              className="w-full bg-[hsl(0,0%,15%)] border border-[hsl(0,0%,18%)] rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none focus:border-[hsl(0,0%,25%)] transition-colors"
-              rows={3}
-            />
+          {/* Сервер */}
+          {isBan && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1.5">На каких серверах</div>
+              <div className="relative">
+                <select
+                  value={selectedServer}
+                  onChange={(e) => setSelectedServer(e.target.value)}
+                  className="w-full bg-[hsl(0,0%,15%)] border border-[hsl(0,0%,18%)] rounded-lg px-3 py-2 text-sm text-foreground outline-none appearance-none"
+                >
+                  <option>На всех</option>
+                  {MOCK_SERVERS.map(s => <option key={s.id}>{s.name}</option>)}
+                </select>
+                <Icon name="ChevronsUpDown" size={13} className="absolute right-2.5 top-2.5 text-muted-foreground pointer-events-none" />
+              </div>
+            </div>
+          )}
+
+          {/* Toggles */}
+          {isBan && (
+            <div className="space-y-2.5">
+              {[
+                { label: "Заблокировать навсегда", val: banForever, set: setBanForever },
+                { label: "Забанить IP адрес", val: banIp, set: setBanIp },
+                { label: "Удалить постройки", val: deleteBuilds, set: setDeleteBuilds },
+                { label: "Забанить команду", val: banTeam, set: setBanTeam },
+              ].map(({ label, val, set }) => (
+                <div key={label} className="flex items-center justify-between">
+                  <span className="text-sm">{label}</span>
+                  <Toggle on={val} onToggle={() => set(v => !v)} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!isBan && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-2">Длительность</div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[["30","30 мин"],["60","1 час"],["1440","1 день"],["10080","7 дней"],["43200","30 дней"],["0","Навсегда"]].map(([v,l]) => (
+                  <button key={v} onClick={() => setDuration(v)} className={`text-xs py-1.5 rounded-md transition-colors ${duration === v ? "bg-[hsl(0,0%,22%)] text-foreground font-medium" : "bg-[hsl(0,0%,15%)] text-muted-foreground hover:bg-[hsl(0,0%,18%)]"}`}>{l}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-4 pb-4">
+          <div className="flex gap-1">
+            <span className={`w-5 h-1.5 rounded-full ${step === 1 ? "bg-foreground" : "bg-[hsl(0,0%,25%)]"}`} />
+            <span className={`w-1.5 h-1.5 rounded-full ${step === 2 ? "bg-foreground" : "bg-[hsl(0,0%,25%)]"}`} />
           </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 text-sm text-muted-foreground bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] rounded-lg transition-colors"
-          >
-            {config.isCheck ? "Нет" : "Отмена"}
-          </button>
-          <button
-            onClick={onClose}
-            className={`flex-1 py-2 text-sm text-white font-medium rounded-lg transition-colors ${config.btnColor}`}
-          >
-            {config.btnLabel}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="px-4 py-1.5 text-sm text-muted-foreground bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] rounded-lg transition-colors">Закрыть</button>
+            <button onClick={onClose} className="px-4 py-1.5 text-sm text-white font-medium bg-[hsl(0,0%,20%)] hover:bg-[hsl(0,0%,24%)] rounded-lg transition-colors">Далее</button>
+          </div>
         </div>
       </div>
     </div>
@@ -465,6 +518,31 @@ function PlayerProfile({ player, onClose }: { player: Player; onClose: () => voi
                   <div>
                     <div className="text-[11px] text-muted-foreground mb-0.5">Аккаунт создан</div>
                     <div className="text-sm">13.08.2016 в 08:09</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === "activity" && (
+            <div className="animate-fade-in">
+              {/* Sub-tabs */}
+              <div className="flex gap-4 border-b border-[hsl(0,0%,15%)] mb-4">
+                {["Сессии","IP адреса","Никнеймы"].map((t) => (
+                  <button key={t} className={`text-xs pb-2 border-b-2 -mb-px transition-colors ${t === "Сессии" ? "text-foreground border-blue-500" : "text-muted-foreground border-transparent"}`}>{t}</button>
+                ))}
+              </div>
+              <div className="space-y-2">
+                <div className="bg-[hsl(0,0%,13%)] rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon name="Calendar" size={12} className="text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">в 00:16:59</span>
+                    <span className="text-xs bg-emerald-600/30 text-emerald-400 px-2 py-0.5 rounded font-medium">Вход</span>
+                  </div>
+                  <div className="text-xs space-y-1">
+                    <div className="text-muted-foreground">IP адрес: <span className="text-blue-400 font-mono">{player.ip}</span></div>
+                    <div className="text-muted-foreground">Сервер: <span className="text-foreground font-medium">{player.server}</span></div>
+                    <div className="text-muted-foreground">Тип клиента: <span className="text-foreground">Пиратский</span></div>
                   </div>
                 </div>
               </div>
@@ -911,196 +989,289 @@ function AuditSection() {
   );
 }
 
+function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${on ? "bg-blue-500" : "bg-[hsl(0,0%,22%)]"}`}
+    >
+      <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${on ? "left-4" : "left-0.5"}`} />
+    </button>
+  );
+}
+
+function TagList({ items, onRemove, onAdd }: { items: string[]; onRemove: (i: number) => void; onAdd: (v: string) => void }) {
+  const [val, setVal] = useState("");
+  return (
+    <div className="flex flex-wrap gap-1.5 items-center">
+      {items.map((r, i) => (
+        <span key={i} className="flex items-center gap-1 text-xs bg-[hsl(0,0%,18%)] px-2.5 py-1 rounded-full text-foreground">
+          {r}
+          <button onClick={() => onRemove(i)} className="text-muted-foreground hover:text-red-400 transition-colors ml-0.5">
+            <Icon name="X" size={10} />
+          </button>
+        </span>
+      ))}
+      <input
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter" && val.trim()) { onAdd(val.trim()); setVal(""); } }}
+        placeholder="+ добавить"
+        className="text-xs bg-transparent text-muted-foreground placeholder:text-muted-foreground outline-none w-20"
+      />
+    </div>
+  );
+}
+
 function ServersSection() {
   return (
-    <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-base font-semibold tracking-tight">Серверы</h1>
-        <button className="flex items-center gap-1.5 bg-[hsl(28,100%,55%)] text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-[hsl(28,100%,50%)] transition-colors">
-          <Icon name="Plus" size={13} />
-          Добавить сервер
-        </button>
+    <div className="animate-fade-in max-w-2xl">
+      <div className="mb-6">
+        <h1 className="text-base font-semibold">Список серверов</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Управление подключёнными серверами</p>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        {MOCK_SERVERS.map((s) => (
-          <div key={s.id} className="border border-[hsl(0,0%,14%)] rounded-lg p-4 hover:border-[hsl(0,0%,20%)] transition-colors bg-[hsl(0,0%,9%)]">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="font-semibold">{s.name}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${s.status === "online" ? "text-emerald-400 bg-emerald-950/40" : "text-muted-foreground bg-[hsl(0,0%,14%)]"}`}>
-                    {s.status === "online" ? "онлайн" : "офлайн"}
-                  </span>
-                  <span className="text-xs text-muted-foreground bg-[hsl(0,0%,14%)] px-1.5 py-0.5 rounded">{s.region}</span>
+
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm font-medium">Серверы</span>
+        <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">Подключить сервер</button>
+      </div>
+
+      {/* Alert */}
+      <div className="flex gap-3 bg-[hsl(0,0%,11%)] border border-[hsl(0,0%,18%)] rounded-lg p-3 mb-4">
+        <Icon name="AlertCircle" size={15} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Новые версии плагина (после 2.1.6) больше не будут официально адаптироваться для DevBlog. Для получения нового функционала вам нужно будет самостоятельно адаптировать плагин под вашу конкретную версию DevBlog.
+        </p>
+      </div>
+
+      {/* Server card */}
+      {MOCK_SERVERS.slice(0, 1).map((s) => (
+        <div key={s.id} className="border border-[hsl(0,0%,16%)] rounded-xl overflow-hidden mb-6">
+          <div className="h-36 bg-gradient-to-br from-amber-900/60 via-orange-900/40 to-[hsl(0,0%,8%)] relative">
+            <div className="absolute inset-0 bg-[url('https://cdn.poehali.dev/projects/af548813-57ac-4ae6-b00e-9eab2924493a/bucket/8923b814-b0eb-4370-afc4-89c45a3ad26a.png')] bg-cover bg-center opacity-30" />
+          </div>
+          <div className="p-3 bg-[hsl(0,0%,10%)]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-[hsl(0,0%,16%)] flex items-center justify-center flex-shrink-0">
+                  <Icon name="Server" size={14} className="text-muted-foreground" />
                 </div>
-                <div className="text-xs text-muted-foreground font-mono">{s.ip}</div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold">aasdasdasda</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span className="w-2 h-2 rounded-full bg-blue-400" />
+                  </div>
+                  <div className="text-xs text-muted-foreground font-mono">SIRNAYBATLANAXYU1337</div>
+                </div>
               </div>
-              <button className="p-1 hover:bg-[hsl(0,0%,15%)] rounded transition-colors text-muted-foreground">
-                <Icon name="MoreHorizontal" size={14} />
+              <button className="text-muted-foreground hover:text-foreground transition-colors">
+                <Icon name="Settings" size={15} />
               </button>
             </div>
-            <div className="flex items-center gap-6 text-sm">
-              <div><div className="text-[11px] text-muted-foreground mb-0.5">Карта</div><div className="font-mono text-xs">{s.map}</div></div>
-              <div><div className="text-[11px] text-muted-foreground mb-0.5">Игроки</div><div className="font-medium text-xs">{s.players}</div></div>
-              <div><div className="text-[11px] text-muted-foreground mb-0.5">Пинг</div>
-                <div className={`text-xs font-mono ${s.ping > 30 ? "text-yellow-400" : s.ping === 0 ? "text-muted-foreground" : "text-emerald-400"}`}>{s.ping > 0 ? `${s.ping}ms` : "—"}</div>
-              </div>
+            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1"><Icon name="Users" size={11} /> 1/40</span>
+              <span>1 заходят</span>
+              <span className="ml-auto">v2.1.6</span>
             </div>
           </div>
-        ))}
+        </div>
+      ))}
+
+      {/* Warning box */}
+      <div className="bg-[hsl(0,0%,11%)] border border-[hsl(0,0%,16%)] rounded-lg p-4">
+        <div className="text-sm font-medium mb-1">Удаление и переподключение серверов</div>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Обратите внимание: удаление сервера для его последующего переподключения — не лучшее решение, так как это приведёт к безвозвратной потере связанных с ним данных и банов. Если возникли неполадки, воспользуйтесь функцией переподключения или обратитесь в поддержку.
+        </p>
       </div>
     </div>
   );
 }
 
 function StaffSection() {
+  const [tab, setTab] = useState<"list" | "settings">("list");
   return (
-    <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-base font-semibold tracking-tight">Сотрудники</h1>
-        <button className="flex items-center gap-1.5 bg-[hsl(28,100%,55%)] text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-[hsl(28,100%,50%)] transition-colors">
-          <Icon name="Plus" size={13} />
-          Добавить
-        </button>
+    <div className="animate-fade-in max-w-2xl">
+      <div className="mb-5">
+        <h1 className="text-base font-semibold">Сотрудники проекта</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Управление членами команды и их правами</p>
       </div>
-      <table className="w-full">
-        <thead><tr className="border-b border-[hsl(0,0%,13%)]">
-          <TH>Сотрудник</TH><TH>Роль</TH><TH>В команде с</TH><TH>Действий</TH><TH>Статус</TH>
-        </tr></thead>
-        <tbody>
-          {MOCK_STAFF.map((s) => (
-            <tr key={s.id} className="border-b border-[hsl(0,0%,11%)] hover:bg-[hsl(0,0%,10%)] transition-colors">
-              <td className="py-3 pr-8">
-                <div className="flex items-center gap-2.5">
-                  <div className="relative"><AvatarBadge name={s.name} /><span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[hsl(0,0%,9%)] ${s.status === "online" ? "bg-emerald-400" : "bg-[hsl(0,0%,28%)]"}`} /></div>
-                  <span className="text-sm font-medium">{s.name}</span>
+
+      {/* Tabs */}
+      <div className="flex gap-5 border-b border-[hsl(0,0%,14%)] mb-5">
+        {(["list","settings"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`text-sm pb-2.5 transition-colors border-b-2 -mb-px ${tab === t ? "text-foreground border-blue-500" : "text-muted-foreground border-transparent hover:text-foreground"}`}
+          >
+            {t === "list" ? "Список" : "Настройки"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "list" && (
+        <div className="animate-fade-in">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm font-medium">Сотрудники</span>
+            <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">Добавить</button>
+          </div>
+          <div className="flex flex-wrap gap-3 mb-8">
+            {MOCK_STAFF.map((s) => (
+              <div key={s.id} className="w-28 border border-[hsl(0,0%,16%)] rounded-xl overflow-hidden bg-[hsl(0,0%,10%)] hover:border-[hsl(0,0%,22%)] transition-colors cursor-pointer">
+                {s.role === "Владелец" && (
+                  <div className="flex justify-center pt-2">
+                    <span className="text-yellow-400 text-base">👑</span>
+                  </div>
+                )}
+                <div className="flex flex-col items-center p-3 pt-2">
+                  <div className="relative mb-2">
+                    <AvatarBadge name={s.name} size="md" />
+                    <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[hsl(0,0%,10%)] ${s.status === "online" ? "bg-emerald-400" : "bg-[hsl(0,0%,28%)]"}`} />
+                  </div>
+                  <div className="text-xs font-medium text-center truncate w-full">{s.name}</div>
+                  <div className="text-[11px] text-muted-foreground">@{s.name}</div>
                 </div>
-              </td>
-              <td className="py-3 pr-8">
-                <span className="text-xs px-2 py-0.5 rounded bg-[hsl(28,100%,55%)]/10 text-[hsl(28,100%,65%)] font-medium">{s.role}</span>
-              </td>
-              <td className="py-3 pr-8 text-sm font-mono text-muted-foreground">{s.since}</td>
-              <td className="py-3 pr-8 text-sm font-medium">{s.actions}</td>
-              <td className="py-3">
-                <div className="flex items-center gap-1.5 text-sm">
-                  <Dot status={s.status} />
-                  <span className="text-muted-foreground">{s.status === "online" ? "онлайн" : "офлайн"}</span>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </div>
+            ))}
+          </div>
+          <div className="bg-[hsl(0,0%,11%)] border border-[hsl(0,0%,16%)] rounded-lg p-4">
+            <div className="text-sm font-medium mb-1">Ответственный подход к правам доступа</div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              При добавлении сотрудников в проект важно следить за их правами доступа. Нужно давать только те полномочия, которые им действительно нужны, чтобы защитить проект. Также следует регулярно обновлять права доступа при изменении обязанностей сотрудников.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {tab === "settings" && (
+        <div className="animate-fade-in text-sm text-muted-foreground">
+          <p>Настройки ролей и прав — в разработке.</p>
+        </div>
+      )}
     </div>
   );
 }
 
 function SettingsSection() {
-  const [muteReasons, setMuteReasons] = useState([
-    "Оскорбления в чате",
-    "Спам",
-    "Реклама сторонних ресурсов",
-    "Флуд",
-  ]);
-  const [banReasons, setBanReasons] = useState([
-    "Читы (аимбот)",
-    "Читы (wallhack)",
-    "Читы (speedhack)",
-    "Мультиаккаунт",
-    "Токсичное поведение",
-    "Обход бана",
-  ]);
-  const [newMute, setNewMute] = useState("");
-  const [newBan, setNewBan] = useState("");
+  const SETTINGS_TABS = ["Репорты", "Проверки", "Баны", "Бан-лист", "Авто-кик", "Действия", "API"];
+  const [stab, setStab] = useState("Баны");
 
-  const addReason = (list: string[], setList: (v: string[]) => void, val: string, setVal: (v: string) => void) => {
-    if (!val.trim()) return;
-    setList([...list, val.trim()]);
-    setVal("");
-  };
+  const [banNotify, setBanNotify] = useState(true);
+  const [banLimit, setBanLimit] = useState(false);
+  const [banCount, setBanCount] = useState(15);
+  const [banInterval, setBanInterval] = useState(60);
 
-  const removeReason = (list: string[], setList: (v: string[]) => void, idx: number) => {
-    setList(list.filter((_, i) => i !== idx));
-  };
+  const [banReasons, setBanReasons] = useState(["Чит", "Макрос", "Багоюз", "Нарушение правил (by {client_tag})", "Мультиаккаунт", "1+", "2+", "3+"]);
+  const [teamBanReasons, setTeamBanReasons] = useState(["Игра с читером", "Тиммейт ({main_steam_id})", "1+", "2+", "3+"]);
+  const [checkVerdicts, setCheckVerdicts] = useState(["Чит", "Макрос", "Багоюз", "Покинул сервер во время проверки", "Игнорирование проверки", "Отказ от проверки", "По результатам проверки"]);
 
   return (
-    <div className="animate-fade-in max-w-xl">
-      <div className="mb-6">
-        <h1 className="text-base font-semibold tracking-tight">Настройки</h1>
-        <p className="text-xs text-muted-foreground mt-1">Управление причинами наказаний</p>
+    <div className="animate-fade-in max-w-3xl">
+      <div className="mb-5">
+        <h1 className="text-base font-semibold">Настройки</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Основные параметры сервиса модерации</p>
       </div>
 
-      {/* Mute reasons */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Icon name="VolumeX" size={14} className="text-yellow-400" />
-          <span className="text-sm font-medium">Причины мута</span>
-        </div>
-        <div className="space-y-1.5 mb-3">
-          {muteReasons.map((r, i) => (
-            <div key={i} className="flex items-center gap-2 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,15%)] rounded-lg px-3 py-2 group">
-              <span className="text-sm flex-1">{r}</span>
-              <button
-                onClick={() => removeReason(muteReasons, setMuteReasons, i)}
-                className="text-muted-foreground hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-              >
-                <Icon name="X" size={13} />
-              </button>
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input
-            value={newMute}
-            onChange={(e) => setNewMute(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addReason(muteReasons, setMuteReasons, newMute, setNewMute)}
-            placeholder="Новая причина..."
-            className="flex-1 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,15%)] rounded-lg px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-[hsl(0,0%,22%)] transition-colors"
-          />
+      {/* Tabs */}
+      <div className="flex gap-5 border-b border-[hsl(0,0%,14%)] mb-6">
+        {SETTINGS_TABS.map((t) => (
           <button
-            onClick={() => addReason(muteReasons, setMuteReasons, newMute, setNewMute)}
-            className="px-3 py-2 bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            key={t}
+            onClick={() => setStab(t)}
+            className={`text-sm pb-2.5 transition-colors border-b-2 -mb-px whitespace-nowrap ${stab === t ? "text-foreground border-blue-500" : "text-muted-foreground border-transparent hover:text-foreground"}`}
           >
-            <Icon name="Plus" size={14} />
+            {t}
           </button>
-        </div>
+        ))}
       </div>
 
-      {/* Ban reasons */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Icon name="Ban" size={14} className="text-red-400" />
-          <span className="text-sm font-medium">Причины бана</span>
-        </div>
-        <div className="space-y-1.5 mb-3">
-          {banReasons.map((r, i) => (
-            <div key={i} className="flex items-center gap-2 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,15%)] rounded-lg px-3 py-2 group">
-              <span className="text-sm flex-1">{r}</span>
-              <button
-                onClick={() => removeReason(banReasons, setBanReasons, i)}
-                className="text-muted-foreground hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-              >
-                <Icon name="X" size={13} />
-              </button>
+      {stab === "Баны" && (
+        <div className="animate-fade-in space-y-6">
+          {/* Общие параметры */}
+          <div>
+            <div className="text-sm font-medium mb-3">Общие параметры</div>
+            <div className="bg-[hsl(0,0%,11%)] border border-[hsl(0,0%,16%)] rounded-xl overflow-hidden divide-y divide-[hsl(0,0%,14%)]">
+              <div className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <div className="text-sm">Отправлять оповещение о бане игрока в чат</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">в чате на сервере появится сообщение о бане игрока</div>
+                </div>
+                <Toggle on={banNotify} onToggle={() => setBanNotify(v => !v)} />
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <div className="text-sm">Ограничение на количество блокировок за определённый период</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">сотрудник не сможет выдать больше блокировок, чем установлено лимитом</div>
+                </div>
+                <Toggle on={banLimit} onToggle={() => setBanLimit(v => !v)} />
+              </div>
+              <div className={`flex items-center justify-between px-4 py-3 transition-opacity ${banLimit ? "opacity-100" : "opacity-40"}`}>
+                <div>
+                  <div className="text-sm text-muted-foreground">Количество блокировок</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">сотрудник не сможет выдать больше блокировок, чем указано</div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-mono w-8 text-right">{banCount}</span>
+                  <div className="flex flex-col gap-0.5">
+                    <button onClick={() => setBanCount(v => v+1)} disabled={!banLimit} className="text-muted-foreground hover:text-foreground disabled:opacity-30"><Icon name="ChevronUp" size={12} /></button>
+                    <button onClick={() => setBanCount(v => Math.max(1,v-1))} disabled={!banLimit} className="text-muted-foreground hover:text-foreground disabled:opacity-30"><Icon name="ChevronDown" size={12} /></button>
+                  </div>
+                </div>
+              </div>
+              <div className={`flex items-center justify-between px-4 py-3 transition-opacity ${banLimit ? "opacity-100" : "opacity-40"}`}>
+                <div>
+                  <div className="text-sm text-muted-foreground">Интервал в минутах</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">промежуток времени, в течение которого учитываются блокировки</div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-mono w-8 text-right">{banInterval}</span>
+                  <div className="flex flex-col gap-0.5">
+                    <button onClick={() => setBanInterval(v => v+5)} disabled={!banLimit} className="text-muted-foreground hover:text-foreground disabled:opacity-30"><Icon name="ChevronUp" size={12} /></button>
+                    <button onClick={() => setBanInterval(v => Math.max(5,v-5))} disabled={!banLimit} className="text-muted-foreground hover:text-foreground disabled:opacity-30"><Icon name="ChevronDown" size={12} /></button>
+                  </div>
+                </div>
+              </div>
             </div>
-          ))}
+          </div>
+
+          {/* Причины */}
+          <div>
+            <div className="text-sm font-medium mb-3">Причины</div>
+            <div className="bg-[hsl(0,0%,11%)] border border-[hsl(0,0%,16%)] rounded-xl p-4 space-y-4">
+              <div>
+                <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                  Причины для блокировок
+                  <Icon name="HelpCircle" size={11} className="opacity-50" />
+                </div>
+                <TagList items={banReasons} onRemove={(i) => setBanReasons(r => r.filter((_,j)=>j!==i))} onAdd={(v) => setBanReasons(r => [...r, v])} />
+              </div>
+              <div className="border-t border-[hsl(0,0%,15%)] pt-4">
+                <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                  Причины для блокировки команды
+                  <Icon name="HelpCircle" size={11} className="opacity-50" />
+                </div>
+                <TagList items={teamBanReasons} onRemove={(i) => setTeamBanReasons(r => r.filter((_,j)=>j!==i))} onAdd={(v) => setTeamBanReasons(r => [...r, v])} />
+              </div>
+              <div className="border-t border-[hsl(0,0%,15%)] pt-4">
+                <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                  Вердикты проверок
+                  <Icon name="HelpCircle" size={11} className="opacity-50" />
+                </div>
+                <TagList items={checkVerdicts} onRemove={(i) => setCheckVerdicts(r => r.filter((_,j)=>j!==i))} onAdd={(v) => setCheckVerdicts(r => [...r, v])} />
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <input
-            value={newBan}
-            onChange={(e) => setNewBan(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addReason(banReasons, setBanReasons, newBan, setNewBan)}
-            placeholder="Новая причина..."
-            className="flex-1 bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,15%)] rounded-lg px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-[hsl(0,0%,22%)] transition-colors"
-          />
-          <button
-            onClick={() => addReason(banReasons, setBanReasons, newBan, setNewBan)}
-            className="px-3 py-2 bg-[hsl(0,0%,15%)] hover:bg-[hsl(0,0%,18%)] rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Icon name="Plus" size={14} />
-          </button>
+      )}
+
+      {stab !== "Баны" && (
+        <div className="flex flex-col items-center justify-center h-40 text-muted-foreground animate-fade-in">
+          <Icon name="Construction" size={24} className="mb-2 opacity-30" />
+          <span className="text-sm">Раздел в разработке</span>
         </div>
-      </div>
+      )}
     </div>
   );
 }
