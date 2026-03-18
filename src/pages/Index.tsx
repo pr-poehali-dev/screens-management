@@ -467,7 +467,113 @@ function PlayerProfile({ player, onClose }: { player: Player; onClose: () => voi
             </div>
           )}
 
-          {tab !== "overview" && (
+          {tab === "checks" && (
+            <div className="space-y-2 animate-fade-in">
+              {MOCK_CHECKS.filter((c) => c.suspect === player.name).length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                  <Icon name="ShieldCheck" size={24} className="mb-2 opacity-30" />
+                  <span className="text-xs">Проверок нет</span>
+                </div>
+              ) : MOCK_CHECKS.filter((c) => c.suspect === player.name).map((c) => (
+                <div key={c.id} className="bg-[hsl(0,0%,13%)] rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Icon name="Calendar" size={12} />
+                      <span>{c.date}</span>
+                      <button className="ml-1 w-4 h-4 rounded-full bg-[hsl(0,0%,18%)] flex items-center justify-center hover:bg-[hsl(0,0%,22%)] transition-colors">
+                        <Icon name="X" size={9} />
+                      </button>
+                    </div>
+                    <button className="text-muted-foreground hover:text-foreground transition-colors">
+                      <Icon name="ExternalLink" size={12} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <AvatarBadge name={c.checker} />
+                    <span className="text-xs">Проверял: <span className="text-[hsl(28,100%,60%)] font-medium">{c.checker}</span></span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">Вердикт: <Verdict v={c.verdict} /></div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === "reports" && (
+            <div className="space-y-2 animate-fade-in">
+              {MOCK_REPORTS.filter((r) => r.suspect === player.name).length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                  <Icon name="Flag" size={24} className="mb-2 opacity-30" />
+                  <span className="text-xs">Репортов нет</span>
+                </div>
+              ) : MOCK_REPORTS.filter((r) => r.suspect === player.name).map((r) => (
+                <div key={r.id} className="bg-[hsl(0,0%,13%)] rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Icon name="Calendar" size={12} />
+                      <span>{r.date}</span>
+                    </div>
+                    <button className="text-muted-foreground hover:text-foreground transition-colors">
+                      <Icon name="ExternalLink" size={12} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <AvatarBadge name={r.reporter} />
+                    <span className="text-xs">От: <span className="text-foreground font-medium">{r.reporter}</span></span>
+                  </div>
+                  {r.contacts !== "—" && <div className="text-xs text-muted-foreground mb-1">Контакты: {r.contacts}</div>}
+                  <div className="text-xs text-muted-foreground">Вердикт: <Verdict v={r.verdict} /></div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === "bans2" && (
+            <div className="space-y-2 animate-fade-in">
+              {MOCK_BANS.filter((b) => b.player === player.name).length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                  <Icon name="Ban" size={24} className="mb-2 opacity-30" />
+                  <span className="text-xs">Блокировок нет</span>
+                </div>
+              ) : MOCK_BANS.filter((b) => b.player === player.name).map((b) => (
+                <div key={b.id} className="bg-[hsl(0,0%,13%)] rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Icon name="Calendar" size={12} />
+                      <span>{b.date}</span>
+                    </div>
+                    <span className={`text-xs font-mono ${b.expires === "Перм." ? "text-red-400" : "text-muted-foreground"}`}>{b.expires}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <AvatarBadge name={b.admin} />
+                    <span className="text-xs">Выдал: <span className="text-foreground font-medium">{b.admin}</span></span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">Причина: {b.reason}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Сервер: <span className="font-mono">{b.server}</span></div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === "notifs" && (
+            <div className="space-y-2 animate-fade-in">
+              {MOCK_NOTIFICATIONS.filter((n) => n.text.includes(player.name)).length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                  <Icon name="Bell" size={24} className="mb-2 opacity-30" />
+                  <span className="text-xs">Оповещений нет</span>
+                </div>
+              ) : MOCK_NOTIFICATIONS.filter((n) => n.text.includes(player.name)).map((n) => (
+                <div key={n.id} className="bg-[hsl(0,0%,13%)] rounded-lg p-3 flex items-start gap-3">
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${priorityDot[n.priority]}`} />
+                  <div>
+                    <div className="text-xs text-foreground">{n.text}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">{n.time}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!["overview","checks","reports","bans2","notifs"].includes(tab) && (
             <div className="flex flex-col items-center justify-center h-48 text-muted-foreground animate-fade-in">
               <Icon name="Construction" size={28} className="mb-2 opacity-40" />
               <span className="text-sm">Раздел в разработке</span>
