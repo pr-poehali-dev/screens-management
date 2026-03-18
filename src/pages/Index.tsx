@@ -276,7 +276,7 @@ function PlayerProfile({ player, onClose }: { player: Player; onClose: () => voi
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
         className="relative z-10 flex bg-[hsl(0,0%,11%)] rounded-xl border border-[hsl(0,0%,16%)] shadow-2xl animate-fade-in overflow-hidden"
-        style={{ width: 660, maxHeight: "60vh" }}
+        style={{ width: 660, height: "480px" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Left panel */}
